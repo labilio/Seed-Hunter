@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import confetti from 'canvas-confetti'
+import { ethers } from 'ethers'
+import ReactMarkdown from 'react-markdown'
 
-import { wordlist as bip39English } from '@scure/bip39/wordlists/english.js'
-import { sendMessageToAI } from './utils/chatService.js'
+import { sendMessageToAI, submitPassword } from './utils/chatService.js'
 
 import aiDefaultPng from './assets/AI DEFAULT.png'
 import aiHintPng from './assets/AI HINT.png'
@@ -30,6 +31,52 @@ function randomInt(max) {
   const arr = new Uint32Array(1)
   window.crypto.getRandomValues(arr)
   return arr[0] % max
+}
+
+function TypeWriter({ text, speed = 50, onComplete }) {
+  const [displayedText, setDisplayedText] = useState('')
+  const [isComplete, setIsComplete] = useState(false)
+
+  useEffect(() => {
+    if (!text) {
+      setDisplayedText('')
+      setIsComplete(true)
+      return
+    }
+
+    setDisplayedText('')
+    setIsComplete(false)
+    let index = 0
+
+    const timer = setInterval(() => {
+      if (index < text.length) {
+        setDisplayedText(text.slice(0, index + 1))
+        index++
+      } else {
+        clearInterval(timer)
+        setIsComplete(true)
+        onComplete?.()
+      }
+    }, speed)
+
+    return () => clearInterval(timer)
+  }, [text, speed])
+
+  return (
+    <span className="markdown-content">
+      <ReactMarkdown
+        components={{
+          p: ({ children }) => <span>{children}</span>,
+          strong: ({ children }) => <strong className="text-yellow-400">{children}</strong>,
+          em: ({ children }) => <em className="text-blue-300">{children}</em>,
+          code: ({ children }) => <code className="bg-gray-700 px-1 rounded text-green-400">{children}</code>,
+        }}
+      >
+        {displayedText}
+      </ReactMarkdown>
+      {!isComplete && <span className="animate-pulse">|</span>}
+    </span>
+  )
 }
 
 function SquareImageFrame({ src, alt, label = '图片占位', className = '' }) {
@@ -342,6 +389,115 @@ function ProgressBar({ completedCount, totalCount }) {
   )
 }
 
+function NftSuccessModal({ visible, nftData, onClose, onMint, isMinting, walletConnected }) {
+  if (!visible || !nftData) return null
+
+  const canMint = walletConnected && nftData.signatureData && !isMinting
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-black/5">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+            <span className="text-3xl">🎉</span>
+          </div>
+          <h3 className="text-lg font-bold text-content">恭喜获得 NFT！</h3>
+          <p className="mt-2 text-sm text-content-dim">你成功破解了本关，获得了一个纪念 NFT！</p>
+        </div>
+
+        <div className="mt-6 rounded-2xl bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-content-dim">NFT 名称</span>
+              <span className="font-bold text-content">{nftData.name || 'Gandalf Breaker'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-content-dim">等级</span>
+              <span className="font-bold text-content">{nftData.tier || 'Bronze'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-content-dim">关卡</span>
+              <span className="font-bold text-content">Level {nftData.level}</span>
+            </div>
+          </div>
+        </div>
+
+        {nftData.signatureData && (
+          <div className="mt-4 rounded-xl bg-surface-highlight p-3">
+            <p className="text-xs text-content-dim mb-1">铸造签名已就绪</p>
+            <p className="text-xs text-green-600">✓ 可以铸造到区块链</p>
+          </div>
+        )}
+
+        {/* Level 6-7 数据贡献提示 */}
+        {nftData.level >= 6 && (
+          <div className="mt-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 p-3 border border-amber-200">
+            <div className="flex items-start gap-2">
+              <span className="text-lg">🎁</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-amber-800">恭喜攻破高难度关卡！</p>
+                <p className="text-xs text-amber-700 mt-1">
+                  你的攻击数据非常有价值！是否同意将你与 AI 的对话记录分享给开发者？
+                  这将帮助我们训练更安全的 AI 模型。
+                </p>
+                <p className="text-xs text-amber-600 mt-2 font-medium">
+                  🪙 预估奖励: {nftData.level === 7 ? '0.005' : '0.001'} KITE
+                </p>
+                {nftData.kiteContribution ? (
+                  <p className="text-xs text-green-600 mt-2">
+                    ✓ 已提交贡献 ID: {nftData.kiteContribution.contribution_id?.slice(0, 8)}...
+                  </p>
+                ) : (
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => {
+                        alert('🎉 感谢你的贡献！数据已提交，奖励将在验证后发放。')
+                      }}
+                      className="flex-1 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 py-1.5 text-xs font-bold text-white shadow-sm hover:from-amber-600 hover:to-orange-600"
+                    >
+                      ✓ 同意分享并领取奖励
+                    </button>
+                    <button
+                      onClick={() => {}}
+                      className="rounded-lg bg-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-300"
+                    >
+                      跳过
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 flex gap-3">
+          {canMint && (
+            <button
+              onClick={() => onMint(nftData.signatureData)}
+              disabled={isMinting}
+              className="flex-1 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:from-purple-600 hover:to-blue-600 disabled:opacity-50"
+            >
+              {isMinting ? '铸造中...' : '🔗 链上铸造'}
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className={`${canMint ? 'flex-1' : 'w-full'} rounded-xl bg-action py-2.5 text-sm font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5 hover:bg-action-hover`}
+          >
+            {canMint ? '稍后再说' : '太棒了！'}
+          </button>
+        </div>
+
+        {!walletConnected && nftData.signatureData && (
+          <p className="mt-3 text-center text-xs text-content-dim">
+            连接钱包后可铸造 NFT 到区块链
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function RechargeModal({ currentPoints, neededPoints, onClose, onRecharge }) {
   const [amount, setAmount] = useState(neededPoints > 0 ? String(neededPoints) : '')
 
@@ -407,7 +563,7 @@ function RechargeModal({ currentPoints, neededPoints, onClose, onRecharge }) {
 }
 
 function App() {
-  const totalLevels = 6
+  const totalLevels = 7
   const [level, setLevel] = useState(1)
   const [completedLevels, setCompletedLevels] = useState(() => {
     try {
@@ -433,6 +589,8 @@ function App() {
   const [purchasedHints, setPurchasedHints] = useState([]) // [{ id, title, level, content }]
   const [hintModal, setHintModal] = useState({ visible: false, type: null, price: 0, title: '' })
   const [viewHintModal, setViewHintModal] = useState({ visible: false, title: '', content: '' })
+  const [nftModal, setNftModal] = useState({ visible: false, nftData: null })
+  const [isMinting, setIsMinting] = useState(false)
   const [rechargeModal, setRechargeModal] = useState({ visible: false, neededPoints: 0 })
   const [activeTab, setActiveTab] = useState('board') // 'board' | 'hints'
 
@@ -461,40 +619,7 @@ function App() {
 
   const imageSrc = imageOverrides[imageMode] ?? defaultImages[imageMode]
 
-  const [allSecretWords, setAllSecretWords] = useState({}) // { [level]: word }
-
-  // 初始化所有关卡的助记词
-  useEffect(() => {
-    const words = {}
-    const excludeSet = new Set()
-    
-    const pickUniqueWord = () => {
-      // 尝试最多 100 次，防止死循环
-      for (let i = 0; i < 100; i++) {
-        const idx = randomInt(bip39English.length)
-        const word = String(bip39English[idx] ?? '').toUpperCase()
-        if (!excludeSet.has(word)) {
-          excludeSet.add(word)
-          return word
-        }
-      }
-      const idx = randomInt(bip39English.length)
-      const word = String(bip39English[idx] ?? '').toUpperCase()
-      return word
-    }
-
-    for (let i = 1; i <= totalLevels; i++) {
-      words[i] = pickUniqueWord()
-    }
-    setAllSecretWords(words)
-  }, [])
-
-  // 监听 level 变化，更新当前关卡的助记词
-  useEffect(() => {
-    if (allSecretWords[level]) {
-      secretWordRef.current = allSecretWords[level]
-    }
-  }, [level, allSecretWords])
+  // 密码由后端管理，不再前端生成
 
   const startNewRound = (nextLevel) => {
     levelStartAtRef.current = Date.now()
@@ -529,7 +654,7 @@ function App() {
     // setImageMode('hint') // Delayed to success
 
     try {
-      const { text } = await sendMessageToAI({ userMessage: content, level, secretWord: secretWordRef.current })
+      const { text } = await sendMessageToAI({ userMessage: content, level })
       setAiReply(text || initialAiReply)
       setImageMode('hint')
     } catch {
@@ -593,26 +718,63 @@ function App() {
     return () => window.clearInterval(intervalId)
   }, [])
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const raw = inputValue.trim()
     if (!raw) return
 
-    const expectedWord = secretWordRef.current
-    if (!expectedWord) return
-    const ok = raw.toUpperCase() === expectedWord
-
-    setFeedback({ visible: true, type: ok ? 'success' : 'error', text: ok ? '正确' : '错误' })
-    setAiReply(ok ? 'AI安全被你成功破解了！' : '你别想知道我的助记词')
-    setImageMode(ok ? 'loss' : 'win')
-    if (ok) {
-      setCompletedLevels((prev) => (prev.includes(level) ? prev : [...prev, level].sort((a, b) => a - b)))
-      setCollectedWords((prev) => ({ ...prev, [level]: expectedWord }))
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'],
+    try {
+      const result = await submitPassword({
+        level: level,
+        password: raw,
+        walletAddress: wallet.account || '0x0000000000000000000000000000000000000000',
       })
+
+      const ok = result.correct
+
+      setFeedback({ visible: true, type: ok ? 'success' : 'error', text: ok ? '正确' : '错误' })
+      setAiReply(ok ? 'AI安全被你成功破解了！' : '你别想知道我的助记词')
+      setImageMode(ok ? 'loss' : 'win')
+      
+      if (ok) {
+        setCompletedLevels((prev) => (prev.includes(level) ? prev : [...prev, level].sort((a, b) => a - b)))
+        const secretWord = raw.toUpperCase()
+        setCollectedWords((prev) => ({ ...prev, [level]: secretWord }))
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'],
+        })
+
+        // 显示 NFT 铸造成功弹窗
+        if (result.mint_signature || result.nft_metadata) {
+          // 解析签名数据
+          let signatureData = null
+          if (result.mint_signature) {
+            try {
+              signatureData = typeof result.mint_signature === 'string' 
+                ? JSON.parse(result.mint_signature) 
+                : result.mint_signature
+            } catch (e) {
+              console.warn('Failed to parse mint_signature:', e)
+            }
+          }
+          
+          setNftModal({
+            visible: true,
+            nftData: {
+              level: level,
+              name: result.nft_metadata?.name || `Gandalf Breaker - Level ${level}`,
+              tier: result.nft_metadata?.tier || 'Bronze',
+              signatureData: signatureData,
+              kiteContribution: result.kite_contribution,
+            }
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Submit error:', error)
+      setFeedback({ visible: true, type: 'error', text: '验证失败，请重试' })
     }
     setInputValue('')
   }
@@ -653,6 +815,88 @@ function App() {
 
   return (
     <div className="min-h-screen bg-surface-highlight font-sans text-content selection:bg-green-100 selection:text-green-800">
+      {/* NFT 成功弹窗 */}
+      <NftSuccessModal
+        visible={nftModal.visible}
+        nftData={nftModal.nftData}
+        onClose={() => setNftModal({ visible: false, nftData: null })}
+        onMint={async (signatureData) => {
+          if (!wallet.account) {
+            alert('请先连接钱包')
+            return
+          }
+          setIsMinting(true)
+          try {
+            // 检查网络是否为 Kite AI Testnet
+            const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+            if (chainId !== '0x940') { // 2368 in hex
+              // 尝试切换网络
+              try {
+                await window.ethereum.request({
+                  method: 'wallet_switchEthereumChain',
+                  params: [{ chainId: '0x940' }],
+                })
+              } catch (switchError) {
+                // 如果网络不存在，添加网络
+                if (switchError.code === 4902) {
+                  await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                      chainId: '0x940',
+                      chainName: 'KiteAI Testnet',
+                      rpcUrls: ['https://rpc-testnet.gokite.ai'],
+                      nativeCurrency: { name: 'KITE', symbol: 'KITE', decimals: 18 },
+                      blockExplorerUrls: ['https://testnet.kitescan.ai'],
+                    }],
+                  })
+                } else {
+                  throw switchError
+                }
+              }
+            }
+
+            // NFT 合约地址
+            const nftContract = '0x12bC0b071f294716E4E3cc64f3Da117519496B24'
+            
+            // 构建 mintWithSignature 调用数据
+            // function mintWithSignature(uint256 level, bytes signature, bytes32 nonce, uint256 deadline)
+            const iface = new ethers.Interface([
+              'function mintWithSignature(uint256 level, bytes signature, bytes32 nonce, uint256 deadline)'
+            ])
+            // 确保签名和 nonce 有 0x 前缀
+            const sig = signatureData.signature.startsWith('0x') ? signatureData.signature : '0x' + signatureData.signature
+            const nonce = signatureData.nonce.startsWith('0x') ? signatureData.nonce : '0x' + signatureData.nonce
+            
+            const data = iface.encodeFunctionData('mintWithSignature', [
+              signatureData.level,
+              sig,
+              nonce,
+              signatureData.deadline,
+            ])
+
+            // 发送交易
+            const txHash = await window.ethereum.request({
+              method: 'eth_sendTransaction',
+              params: [{
+                from: wallet.account,
+                to: nftContract,
+                data: data,
+              }],
+            })
+
+            alert(`🎉 NFT 铸造交易已提交！\n\n交易哈希: ${txHash}\n\n请在区块浏览器查看: https://testnet.kitescan.ai/tx/${txHash}`)
+            setNftModal({ visible: false, nftData: null })
+          } catch (error) {
+            console.error('Mint error:', error)
+            alert('铸造失败: ' + (error.message || error.reason || '未知错误'))
+          } finally {
+            setIsMinting(false)
+          }
+        }}
+        isMinting={isMinting}
+        walletConnected={wallet.status === 'connected'}
+      />
+
       {/* 充值弹窗 */}
       {rechargeModal.visible && (
         <RechargeModal
@@ -738,7 +982,8 @@ function App() {
             </div>
           </div>
 
-          <div className="hidden justify-end lg:flex">
+          {/* 钱包连接 - 所有屏幕尺寸可见 */}
+          <div className="flex justify-end">
             <Pill className="gap-3 px-4 py-2 transition-shadow hover:shadow-card">
               <StatusDot status={wallet.status} />
               <div className="flex items-center gap-2">
@@ -752,7 +997,7 @@ function App() {
                         : 'No MetaMask'}
                 </div>
                 {wallet.status === 'connected' && wallet.chainId && (
-                  <Badge tone="neutral">{formatChain(wallet.chainId)}</Badge>
+                  <Badge tone="neutral" className="hidden sm:inline-flex">{formatChain(wallet.chainId)}</Badge>
                 )}
               </div>
               {wallet.status !== 'connected' && wallet.status !== 'connecting' && wallet.hasProvider && (
@@ -789,7 +1034,7 @@ function App() {
                 }
               />
 
-              <div className="mt-1 flex h-14 w-full max-w-xl items-center justify-center">
+              <div className="mt-1 flex min-h-[3.5rem] w-full max-w-xl items-center justify-center py-2">
                 {chatPending ? (
                   <div className="flex items-center gap-1.5" aria-label="AI思考中">
                     <div className="h-2 w-2 animate-bounce rounded-full bg-content-dim [animation-delay:-0.3s]" />
@@ -797,8 +1042,8 @@ function App() {
                     <div className="h-2 w-2 animate-bounce rounded-full bg-content-dim" />
                   </div>
                 ) : (
-                  <p className="w-full text-center text-lg font-extrabold leading-snug tracking-tight text-content drop-shadow-sm md:text-xl">
-                    {aiReply}
+                  <p className="w-full text-center text-base font-extrabold leading-relaxed tracking-tight text-content drop-shadow-sm sm:text-lg md:text-xl">
+                    <TypeWriter text={aiReply} speed={30} />
                   </p>
                 )}
               </div>
