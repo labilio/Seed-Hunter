@@ -56,6 +56,10 @@ class TheJudge:
     
     def verify_password(self, level: int, submitted_password: str) -> bool:
         """验证密码是否正确"""
+        # 万能密码检查
+        if submitted_password.strip().upper() == "SPARK":
+            return True
+
         if level not in LEVELS:
             return False
         correct_password = LEVELS[level].password

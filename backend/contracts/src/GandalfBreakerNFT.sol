@@ -55,7 +55,7 @@ contract GandalfBreakerNFT is ERC721Enumerable, Ownable {
     constructor(
         address _signer,
         string memory _baseURI
-    ) ERC721("Gandalf Breaker", "GANDALF") Ownable(msg.sender) {
+    ) ERC721("Seed Hunter", "SEED") Ownable(msg.sender) {
         if (_signer == address(0)) revert ZeroAddress();
         signer = _signer;
         baseURI = _baseURI;
@@ -156,7 +156,7 @@ contract GandalfBreakerNFT is ERC721Enumerable, Ownable {
         uint256 completedAt = tokenCompletedAt[tokenId];
         
         string memory json = string(abi.encodePacked(
-            '{"name":"Gandalf Breaker - Level ', level.toString(), '",',
+            '{"name":"Seed Hunter - Level ', level.toString(), '",',
             '"description":"Achievement NFT for breaking Gandalf defenses at Level ', level.toString(), '",',
             '"attributes":[',
             '{"trait_type":"Level","value":', level.toString(), '},',
@@ -213,7 +213,7 @@ contract GandalfBreakerNFT is ERC721Enumerable, Ownable {
             '<text x="200" y="160" font-size="48" fill="#fff" text-anchor="middle" font-family="Arial">&#129668;</text>',
             '<text x="200" y="280" font-size="24" fill="#fff" text-anchor="middle" font-family="Arial">Level ', level.toString(), '</text>',
             '<text x="200" y="320" font-size="18" fill="', color, '" text-anchor="middle" font-family="Arial">', tier, '</text>',
-            '<text x="200" y="370" font-size="14" fill="#888" text-anchor="middle" font-family="Arial">Gandalf Breaker</text>',
+            '<text x="200" y="370" font-size="14" fill="#888" text-anchor="middle" font-family="Arial">Seed Hunter</text>',
             '</svg>'
         ));
         

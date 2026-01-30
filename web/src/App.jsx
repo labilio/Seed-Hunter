@@ -10,6 +10,8 @@ import aiHintPng from './assets/AI HINT.png'
 import aiLossPng from './assets/AI LOSS.png'
 import aiWinPng from './assets/AI WIN.png'
 
+import { lessons } from './data/lessons.js'
+
 function getEthereum() {
   if (typeof window === 'undefined') return null
   const eth = window.ethereum
@@ -65,6 +67,7 @@ function TypeWriter({ text, speed = 50, onComplete }) {
   return (
     <span className="markdown-content">
       <ReactMarkdown
+        key={text} // Add key to force re-render when text changes, ensuring typing effect restarts
         components={{
           p: ({ children }) => <span>{children}</span>,
           strong: ({ children }) => <strong className="text-yellow-400">{children}</strong>,
@@ -307,15 +310,15 @@ function LevelSelect({ value, onChange, completedLevels, totalLevels }) {
   const options = useMemo(() => Array.from({ length: totalLevels }, (_, i) => i + 1), [totalLevels])
 
   return (
-    <div className="relative">
+    <div className="relative w-full max-w-[140px]">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 rounded-2xl bg-white/80 px-4 py-2 shadow-soft ring-1 ring-black/5 backdrop-blur-md transition-shadow hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action/35"
+        className="flex w-full items-center justify-between rounded-xl bg-surface-highlight px-3 py-2 text-sm font-bold text-content transition-colors hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action/35"
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className="text-sm font-extrabold tracking-tight text-content">Level {value}</span>
+        <span>Level {value}</span>
         <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 text-content-dim" aria-hidden="true">
           <path d="M5 7.5l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
@@ -324,16 +327,10 @@ function LevelSelect({ value, onChange, completedLevels, totalLevels }) {
       {open && (
         <>
           <button type="button" className="fixed inset-0 z-10" onClick={() => setOpen(false)} aria-label="Close" />
-          <div className="absolute left-0 z-20 mt-2 w-56 overflow-hidden rounded-2xl bg-white/95 shadow-card ring-1 ring-black/10 backdrop-blur-md">
-            <div className="px-4 pt-3 pb-2 text-xs font-semibold tracking-[0.16em] text-content-dim">选择关卡</div>
-            <div className="max-h-72 overflow-auto pb-2">
+          <div className="absolute right-0 top-full z-20 mt-2 w-full min-w-[140px] overflow-hidden rounded-xl bg-white shadow-card ring-1 ring-black/10">
+            <div className="max-h-60 overflow-auto py-1">
               {options.map((lvl) => {
                 const completed = completedLevels.includes(lvl)
-                // 允许选择的条件：
-                // 1. 已完成的关卡
-                // 2. 当前正在进行的关卡（例如 Level 1 一开始就是解锁的）
-                // 3. 已完成关卡的下一关（即当前进度的最新关卡）
-                // 简单来说：lvl <= 最大已完成关卡 + 1
                 const maxUnlocked = Math.max(0, ...completedLevels) + 1
                 const locked = lvl > maxUnlocked
 
@@ -347,16 +344,16 @@ function LevelSelect({ value, onChange, completedLevels, totalLevels }) {
                       onChange(lvl)
                       setOpen(false)
                     }}
-                    className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm font-semibold transition-colors focus-visible:outline-none ${
+                    className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs font-bold transition-colors ${
                       locked
                         ? 'cursor-not-allowed opacity-40 grayscale'
-                        : 'hover:bg-black/5 focus-visible:bg-black/5'
-                    } ${lvl === value ? 'text-content' : 'text-content-dim'}`}
+                        : 'hover:bg-black/5'
+                    } ${lvl === value ? 'bg-action/5 text-action' : 'text-content'}`}
                   >
                     <div className="flex items-center gap-2">
                       <span>Level {lvl}</span>
                       {locked && (
-                        <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" stroke="currentColor" strokeWidth="2">
+                        <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" stroke="currentColor" strokeWidth="2">
                           <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                           <path d="M7 11V7a5 5 0 0110 0v4" />
                         </svg>
@@ -378,12 +375,13 @@ function ProgressBar({ completedCount, totalCount }) {
   const ratio = totalCount > 0 ? Math.min(1, Math.max(0, completedCount / totalCount)) : 0
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="text-sm font-semibold text-content-dim">
-        关卡进度 {completedCount}/{totalCount}
+    <div className="flex flex-col gap-2 w-full">
+      <div className="flex items-center justify-between text-xs font-bold text-content-dim">
+        <span>进度</span>
+        <span>{completedCount}/{totalCount}</span>
       </div>
-      <div className="h-2 w-40 overflow-hidden rounded-full bg-black/10 sm:w-56">
-        <div className="h-full rounded-full bg-action" style={{ width: `${ratio * 100}%` }} />
+      <div className="h-2 w-full overflow-hidden rounded-full bg-black/5">
+        <div className="h-full rounded-full bg-action transition-all duration-500" style={{ width: `${ratio * 100}%` }} />
       </div>
     </div>
   )
@@ -409,7 +407,7 @@ function NftSuccessModal({ visible, nftData, onClose, onMint, isMinting, walletC
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-content-dim">NFT 名称</span>
-              <span className="font-bold text-content">{nftData.name || 'Gandalf Breaker'}</span>
+              <span className="font-bold text-content">{nftData.name || 'Seed Hunter'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-content-dim">等级</span>
@@ -562,6 +560,520 @@ function RechargeModal({ currentPoints, neededPoints, onClose, onRecharge }) {
   )
 }
 
+function LeaderboardPage({ userPoints, userLevels, userAddress }) {
+  const bots = [
+    { name: 'Keylen', address: '0x1234567890abcdef1234567890abcdef12345678', levels: 7, points: 1500 },
+    { name: 'Reece', address: '0xabcdef1234567890abcdef1234567890abcdef12', levels: 6, points: 1200 },
+    { name: 'Weiling', address: '0x7890abcdef1234567890abcdef1234567890ab', levels: 6, points: 1150 },
+    { name: 'Sue', address: '0x4567890abcdef1234567890abcdef1234567890', levels: 5, points: 980 },
+    { name: 'XiaoHai', address: '0x90abcdef1234567890abcdef1234567890abcd', levels: 5, points: 950 },
+    { name: 'Jintol', address: '0xdef1234567890abcdef1234567890abcdef1234', levels: 4, points: 800 },
+    { name: 'Ray', address: '0x34567890abcdef1234567890abcdef1234567890', levels: 4, points: 780 },
+    { name: 'Coooder', address: '0xbcdef1234567890abcdef1234567890abcdef12', levels: 3, points: 600 },
+    { name: 'Iris', address: '0x567890abcdef1234567890abcdef1234567890ab', levels: 3, points: 550 },
+    { name: 'Elizabeth', address: '0x0abcdef1234567890abcdef1234567890abcdef', levels: 2, points: 400 },
+    { name: 'Jayden Wei', address: '0xef1234567890abcdef1234567890abcdef12345', levels: 2, points: 380 },
+    { name: 'Wachi', address: '0x67890abcdef1234567890abcdef1234567890ab', levels: 1, points: 200 },
+  ]
+
+  const leaderboardData = useMemo(() => {
+    const data = [...bots]
+    // 只有当用户积分大于0时才显示在排行榜中
+    if (userPoints > 0) {
+      data.push({
+        name: 'USER',
+        address: userAddress || '',
+        levels: userLevels,
+        points: userPoints,
+        isCurrentUser: true,
+      })
+    }
+    // 排序逻辑：优先按关卡数降序，关卡数相同时按积分降序
+    return data.sort((a, b) => {
+      if (b.levels !== a.levels) {
+        return b.levels - a.levels
+      }
+      return b.points - a.points
+    })
+  }, [userPoints, userLevels, userAddress])
+
+  return (
+    <div className="mx-auto w-full max-w-4xl px-6 py-12">
+      <div className="mb-8 text-center">
+        <h2 className="text-3xl font-black text-content">🏆 猎手排行榜</h2>
+        <p className="mt-2 text-content-dim">看看谁是全网最强的助记词猎手</p>
+      </div>
+
+      <div className="overflow-hidden rounded-3xl bg-white shadow-card ring-1 ring-black/5">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="border-b border-black/5 bg-surface-highlight text-sm font-bold text-content-dim">
+              <th className="px-6 py-4">排名</th>
+              <th className="px-6 py-4">玩家</th>
+              <th className="px-6 py-4">钱包地址</th>
+              <th className="px-6 py-4 text-center">破解关卡</th>
+              <th className="px-6 py-4 text-right">总积分</th>
+            </tr>
+          </thead>
+          <tbody className="text-sm font-medium text-content">
+            {leaderboardData.map((user, index) => {
+              const rank = index + 1
+              
+              return (
+                <tr 
+                  key={user.name + index} 
+                  className={`group transition-colors hover:bg-black/[0.02] ${
+                    user.isCurrentUser ? 'bg-action/5' : ''
+                  }`}
+                >
+                  <td className="px-6 py-4">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
+                      rank === 1 ? 'bg-yellow-100 text-yellow-700' :
+                      rank === 2 ? 'bg-gray-100 text-gray-700' :
+                      rank === 3 ? 'bg-orange-100 text-orange-800' :
+                      'text-content-dim'
+                    }`}>
+                      {rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : rank}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <span className={user.isCurrentUser ? 'font-bold text-action' : ''}>
+                        {user.name}
+                      </span>
+                      {user.isCurrentUser && (
+                        <span className="rounded-full bg-action px-2 py-0.5 text-[10px] font-bold text-white">
+                          YOU
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 font-mono text-content-dim">
+                    {formatAddress(user.address)}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="inline-flex items-center rounded-lg bg-surface-highlight px-2.5 py-1 text-xs font-bold">
+                      Lv.{user.levels}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right font-bold tabular-nums">
+                    {user.points.toLocaleString()}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function CertificatePage({ wallet, completedLevels, totalLevels }) {
+  const isAllCompleted = completedLevels.length >= totalLevels
+  const isWalletConnected = !!wallet?.address
+
+  return (
+    <div className="mx-auto w-full max-w-4xl px-6 py-12 flex flex-col items-center animate-in fade-in zoom-in duration-500">
+      <div className="relative mb-12 group cursor-pointer perspective-1000">
+        <div className="relative transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-y-12">
+          <div className="absolute inset-0 bg-yellow-400/20 blur-3xl rounded-full animate-pulse"></div>
+          <div className="relative text-[180px] leading-none drop-shadow-2xl filter">
+            🎖️
+          </div>
+        </div>
+      </div>
+
+      <h2 className="text-4xl font-black text-content text-center mb-4 bg-gradient-to-r from-yellow-600 to-yellow-400 bg-clip-text text-transparent">
+        Seed Hunter
+        <br />
+        安全守护者荣誉勋章
+      </h2>
+      
+      <p className="text-content-dim text-lg text-center max-w-lg mb-12">
+        只有完成所有 {totalLevels} 个关卡的勇士，才有资格获得这枚象征着智慧与勇气的最高荣誉勋章。
+      </p>
+
+      <div className="flex flex-col sm:flex-row gap-6 w-full max-w-md">
+        <button
+          onClick={() => !isWalletConnected && wallet?.connect()}
+          disabled={isWalletConnected}
+          className={`flex-1 rounded-2xl py-4 px-6 font-bold text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-3 ${
+            isWalletConnected
+              ? 'bg-green-500 text-white cursor-default ring-4 ring-green-200'
+              : 'bg-surface text-content hover:bg-surface-highlight hover:-translate-y-1'
+          }`}
+        >
+          {isWalletConnected ? (
+            <>
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              已连接钱包
+            </>
+          ) : (
+            <>
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6 text-content-dim">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
+              </svg>
+              连接钱包
+            </>
+          )}
+        </button>
+
+        <button
+          disabled={!isAllCompleted || !isWalletConnected}
+          className={`flex-1 rounded-2xl py-4 px-6 font-bold text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+            isAllCompleted && isWalletConnected
+              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:shadow-orange-500/30 hover:-translate-y-1 hover:scale-105'
+              : 'bg-black/5 text-content-dim cursor-not-allowed'
+          }`}
+        >
+          <span>领取勋章</span>
+          {!isAllCompleted && (
+            <span className="text-xs bg-black/10 px-2 py-0.5 rounded-full">
+              {completedLevels.length}/{totalLevels}
+            </span>
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function LearningPage({ points, setPoints, completedLessons, setCompletedLessons }) {
+  const [selectedLesson, setSelectedLesson] = useState(null)
+  const [quizState, setQuizState] = useState({
+    step: 'learning', // 'learning' | 'history' | 'quiz' | 'completed'
+    currentQuestionIndex: 0,
+    selectedOption: null,
+    showExplanation: false,
+    earnedPoints: 0,
+  })
+
+  // 积分奖励规则
+  const REWARDS = {
+    '简单': 10,
+    '中级': 30,
+    '困难': 50,
+  }
+
+  // 重置测验状态
+  const resetQuiz = () => {
+    setQuizState({
+      step: 'learning',
+      currentQuestionIndex: 0,
+      selectedOption: null,
+      showExplanation: false,
+      earnedPoints: 0,
+    })
+  }
+
+  // 关闭模态框时重置所有状态
+  const handleCloseModal = () => {
+    setSelectedLesson(null)
+    resetQuiz()
+  }
+
+  const handleOptionSelect = (optionIndex, correctIndex) => {
+    if (quizState.showExplanation) return // 防止重复点击
+
+    setQuizState((prev) => ({
+      ...prev,
+      selectedOption: optionIndex,
+      showExplanation: true,
+    }))
+  }
+
+  const handleNextQuestion = () => {
+    if (!selectedLesson?.quiz) return
+
+    const nextIndex = quizState.currentQuestionIndex + 1
+    if (nextIndex < selectedLesson.quiz.length) {
+      setQuizState((prev) => ({
+        ...prev,
+        currentQuestionIndex: nextIndex,
+        selectedOption: null,
+        showExplanation: false,
+      }))
+    } else {
+      // 测验完成，结算奖励
+      const isFirstTime = !completedLessons.includes(selectedLesson.id)
+      let reward = 0
+      
+      if (isFirstTime) {
+        reward = REWARDS[selectedLesson.difficulty] || 10
+        setPoints((prev) => prev + reward)
+        setCompletedLessons((prev) => [...prev, selectedLesson.id])
+      }
+
+      setQuizState((prev) => ({ 
+        ...prev, 
+        step: 'completed',
+        earnedPoints: reward 
+      }))
+    }
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-6xl px-6 py-12">
+      <div className="mb-12 flex flex-col items-center gap-4 text-center">
+        <div>
+          <h2 className="text-3xl font-black text-content">📚 安全知识库</h2>
+          <p className="mt-2 text-content-dim">学习 AI 安全与 Web3 防御知识，武装你的大脑</p>
+        </div>
+        <div className="flex items-center gap-2 rounded-full bg-surface-highlight px-4 py-1.5 shadow-sm ring-1 ring-black/5">
+          <span className="text-sm font-bold text-content-dim">当前积分</span>
+          <span className="text-lg font-black text-action">{points}</span>
+        </div>
+      </div>
+
+      <div className="space-y-12">
+        {['简单', '中级', '困难'].map((difficulty) => {
+          const groupLessons = lessons.filter(l => l.difficulty === difficulty)
+          if (groupLessons.length === 0) return null
+
+          return (
+            <div key={difficulty}>
+              <h3 className="mb-6 text-xl font-black text-content flex items-center gap-2">
+                {difficulty}挑战
+              </h3>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {groupLessons.map((lesson) => {
+                  const isCompleted = completedLessons.includes(lesson.id)
+                  
+                  return (
+                    <div
+                      key={lesson.id}
+                      onClick={() => setSelectedLesson(lesson)}
+                      className="group relative flex cursor-pointer flex-col gap-4 rounded-3xl bg-white p-6 shadow-card ring-1 ring-black/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-action/20"
+                    >
+                      <div className="flex items-start justify-between">
+                        <span className="text-4xl">{lesson.icon}</span>
+                        <span className={`rounded-lg px-2 py-1 text-xs font-bold ${
+                          lesson.difficulty === '简单' ? 'bg-green-100 text-green-700' :
+                          lesson.difficulty === '中级' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {lesson.difficulty}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 className="text-lg font-bold text-content group-hover:text-action transition-colors">
+                          {lesson.title}
+                        </h3>
+                        <p className="mt-2 text-sm text-content-dim leading-relaxed line-clamp-3">
+                          {lesson.summary}
+                        </p>
+                      </div>
+
+                      <div className="mt-auto pt-4 flex items-center justify-between text-xs font-bold">
+                        <span className="text-action opacity-0 transition-opacity group-hover:opacity-100 flex items-center">
+                          点击学习
+                          <svg viewBox="0 0 20 20" fill="none" className="ml-1 h-4 w-4" stroke="currentColor" strokeWidth="2">
+                            <path d="M7.5 15l5-5-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </span>
+                        {isCompleted ? (
+                          <span className="rounded-lg bg-green-500 px-2 py-1 text-[10px] text-white shadow-sm">
+                            ✓ 已完成
+                          </span>
+                        ) : (
+                          <span className="text-content-dim/60">
+                            +{REWARDS[lesson.difficulty]} 积分
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Lesson Modal */}
+      {selectedLesson && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex flex-col border-b border-black/5 px-8 py-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-4xl">{selectedLesson.icon}</span>
+                  <div>
+                    <h3 className="text-2xl font-black text-content">{selectedLesson.title}</h3>
+                    {selectedLesson.subtitle && (
+                      <p className="text-base font-medium text-content-dim mt-1">{selectedLesson.subtitle}</p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={handleCloseModal}
+                  className="rounded-full p-2 text-content-dim hover:bg-black/5 hover:text-content transition-colors -mr-2 -mt-2"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="2">
+                    <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            {/* Content Area */}
+            <div className="flex-1 overflow-y-auto px-8 py-6">
+              {quizState.step === 'learning' ? (
+                <article className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-headings:text-content prose-p:text-content-dim prose-strong:text-content prose-code:text-action prose-code:bg-action/5 prose-code:px-1 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-hr:border-black/10 prose-hr:my-8 prose-img:rounded-xl">
+                  <ReactMarkdown>{selectedLesson.content}</ReactMarkdown>
+                </article>
+              ) : quizState.step === 'history' ? (
+                <article className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-headings:text-content prose-p:text-content-dim prose-strong:text-content prose-code:text-action prose-code:bg-action/5 prose-code:px-1 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-hr:border-black/10 prose-hr:my-8 prose-img:rounded-xl animate-in fade-in slide-in-from-right duration-300">
+                  <ReactMarkdown>{selectedLesson.historyCase}</ReactMarkdown>
+                </article>
+              ) : quizState.step === 'quiz' ? (
+                <div className="flex flex-col gap-6 animate-in slide-in-from-right duration-300">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-content-dim">
+                      随堂测验 {quizState.currentQuestionIndex + 1}/{selectedLesson.quiz?.length || 0}
+                    </span>
+                    <div className="h-2 w-24 rounded-full bg-black/5">
+                      <div 
+                        className="h-full rounded-full bg-action transition-all duration-300" 
+                        style={{ width: `${((quizState.currentQuestionIndex + 1) / (selectedLesson.quiz?.length || 1)) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <h4 className="text-xl font-bold text-content">
+                    {selectedLesson.quiz?.[quizState.currentQuestionIndex].question}
+                  </h4>
+
+                  <div className="flex flex-col gap-3">
+                    {selectedLesson.quiz?.[quizState.currentQuestionIndex].options.map((option, idx) => {
+                      const isSelected = quizState.selectedOption === idx
+                      const isCorrect = idx === selectedLesson.quiz?.[quizState.currentQuestionIndex].correctIndex
+                      
+                      let buttonClass = "w-full rounded-xl border-2 px-6 py-4 text-left text-sm font-bold transition-all duration-200 "
+                      
+                      if (quizState.showExplanation) {
+                        if (isCorrect) {
+                          buttonClass += "border-green-500 bg-green-50 text-green-700"
+                        } else if (isSelected) {
+                          buttonClass += "border-red-200 bg-red-50 text-red-700 opacity-60"
+                        } else {
+                          buttonClass += "border-transparent bg-surface-highlight text-content-dim opacity-50"
+                        }
+                      } else {
+                        buttonClass += "border-transparent bg-surface-highlight text-content hover:bg-black/5 hover:border-black/10"
+                      }
+
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => handleOptionSelect(idx, selectedLesson.quiz?.[quizState.currentQuestionIndex].correctIndex)}
+                          disabled={quizState.showExplanation}
+                          className={buttonClass}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{option}</span>
+                            {quizState.showExplanation && isCorrect && (
+                              <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-green-600">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {quizState.showExplanation && (
+                    <div className="rounded-xl bg-action/5 p-4 animate-in fade-in zoom-in-95 duration-300">
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl">💡</span>
+                        <div>
+                          <p className="font-bold text-action text-sm mb-1">正确答案</p>
+                          <p className="text-sm text-content-dim leading-relaxed">
+                            {selectedLesson.quiz?.[quizState.currentQuestionIndex].explanation}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full gap-6 text-center animate-in zoom-in duration-300 py-12">
+                  <div className="h-24 w-24 rounded-full bg-green-100 flex items-center justify-center text-5xl">
+                    🎓
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-content">恭喜完成学习！</h3>
+                    <p className="mt-2 text-content-dim">你已经掌握了这个安全知识点。</p>
+                    {quizState.earnedPoints > 0 ? (
+                      <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-yellow-100 px-4 py-2 text-sm font-bold text-yellow-800">
+                        <span>💰</span>
+                        <span>获得 {quizState.earnedPoints} 积分</span>
+                      </div>
+                    ) : (
+                      <p className="mt-4 text-sm font-bold text-content-dim">
+                        （你已领取过该课程的积分奖励）
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-black/5 px-8 py-6 bg-surface-highlight/30 rounded-b-3xl">
+              {quizState.step === 'learning' ? (
+                <button
+                  onClick={() => setQuizState((prev) => ({ ...prev, step: 'history' }))}
+                  className="w-full rounded-xl bg-action py-3.5 text-base font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5 hover:bg-action-hover flex items-center justify-center gap-2"
+                >
+                  查看历史真实案例
+                  <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 10l10 0M11 6l4 4l-4 4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              ) : quizState.step === 'history' ? (
+                <button
+                  onClick={() => setQuizState((prev) => ({ ...prev, step: 'quiz' }))}
+                  className="w-full rounded-xl bg-action py-3.5 text-base font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5 hover:bg-action-hover flex items-center justify-center gap-2"
+                >
+                  开始随堂测验
+                  <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 10l10 0M11 6l4 4l-4 4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              ) : quizState.step === 'quiz' ? (
+                <button
+                  onClick={handleNextQuestion}
+                  disabled={!quizState.showExplanation}
+                  className="w-full rounded-xl bg-action py-3.5 text-base font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5 hover:bg-action-hover disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+                >
+                  {quizState.currentQuestionIndex < (selectedLesson.quiz?.length || 0) - 1 ? '下一题' : '完成测验'}
+                  <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 10l10 0M11 6l4 4l-4 4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  onClick={handleCloseModal}
+                  className="w-full rounded-xl bg-surface text-content ring-1 ring-black/10 py-3.5 text-base font-bold shadow-sm transition-colors hover:bg-black/5"
+                >
+                  关闭
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function App() {
   const totalLevels = 7
   const [level, setLevel] = useState(1)
@@ -578,6 +1090,7 @@ function App() {
       return []
     }
   })
+  const [completedLessons, setCompletedLessons] = useState([]) // [lessonId, ...]
   const [inputValue, setInputValue] = useState('')
   const initialAiReply = '我是助记词守护之神，我不会告诉你助记词'
   const [aiReply, setAiReply] = useState(initialAiReply)
@@ -593,6 +1106,7 @@ function App() {
   const [isMinting, setIsMinting] = useState(false)
   const [rechargeModal, setRechargeModal] = useState({ visible: false, neededPoints: 0 })
   const [activeTab, setActiveTab] = useState('board') // 'board' | 'hints'
+  const [currentView, setCurrentView] = useState('game') // 'game' | 'leaderboard' | 'learning' | 'certificate'
 
   const totalStartAtRef = useRef(0)
   const levelStartAtRef = useRef(0)
@@ -628,7 +1142,8 @@ function App() {
     setInputValue('')
     setFeedback({ visible: false, type: 'info', text: '' })
     setImageMode('default')
-    setAiReply(initialAiReply)
+    setAiReply('') // Clear first to trigger re-render if needed, though TypeWriter handles key change
+    setTimeout(() => setAiReply(initialAiReply), 0) // Reset to initial reply to trigger typing effect
     setChatValue('')
   }
 
@@ -764,7 +1279,7 @@ function App() {
             visible: true,
             nftData: {
               level: level,
-              name: result.nft_metadata?.name || `Gandalf Breaker - Level ${level}`,
+              name: result.nft_metadata?.name || `Seed Hunter - Level ${level}`,
               tier: result.nft_metadata?.tier || 'Bronze',
               signatureData: signatureData,
               kiteContribution: result.kite_contribution,
@@ -971,14 +1486,70 @@ function App() {
       <header className="fixed top-0 left-0 right-0 z-10 border-b border-black/5 bg-surface-highlight/80 backdrop-blur-md">
         <div className="mx-auto grid h-20 w-full max-w-7xl items-center gap-8 px-6 md:px-12 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <div className="mx-auto w-full max-w-2xl">
-            <div className="flex items-center gap-4">
-              <LevelSelect
-                value={level}
-                onChange={startNewRound}
-                completedLevels={completedLevels}
-                totalLevels={totalLevels}
-              />
-              <ProgressBar completedCount={completedLevels.length} totalCount={totalLevels} />
+            <div className="flex items-center gap-6">
+              {/* Logo Area */}
+              <div className="flex items-center gap-3 select-none">
+                <span className="text-3xl">🔑</span>
+                <div className="flex flex-col">
+                  <span className="text-lg font-black tracking-tight text-content leading-none">Seed Hunter</span>
+                  <span className="text-[10px] font-medium text-content-dim/80 leading-none mt-0.5">助记词猎手</span>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-8 w-px bg-black/10" />
+
+              {/* Navigation Links */}
+              <div className="flex items-center gap-8">
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('game')}
+                  className={`relative flex flex-col items-center text-base font-bold transition-colors ${
+                    currentView === 'game' ? 'text-content hover:text-action' : 'text-content-dim hover:text-action'
+                  }`}
+                >
+                  ⚔️ 攻防挑战
+                  {currentView === 'game' && (
+                    <span className="absolute -bottom-1.5 h-0.5 w-1/2 rounded-full bg-action" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('learning')}
+                  className={`relative flex flex-col items-center text-base font-bold transition-colors ${
+                    currentView === 'learning' ? 'text-content hover:text-action' : 'text-content-dim hover:text-action'
+                  }`}
+                >
+                  📚 安全学习
+                  {currentView === 'learning' && (
+                    <span className="absolute -bottom-1.5 h-0.5 w-1/2 rounded-full bg-action" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('leaderboard')}
+                  className={`relative flex flex-col items-center text-base font-bold transition-colors ${
+                    currentView === 'leaderboard' ? 'text-content hover:text-action' : 'text-content-dim hover:text-action'
+                  }`}
+                >
+                  🏆 排行榜单
+                  {currentView === 'leaderboard' && (
+                    <span className="absolute -bottom-1.5 h-0.5 w-1/2 rounded-full bg-action" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('certificate')}
+                  className={`relative flex flex-col items-center text-base font-bold transition-colors ${
+                    currentView === 'certificate' ? 'text-content hover:text-action' : 'text-content-dim hover:text-action'
+                  }`}
+                >
+                  🎖️ 领取证书
+                  {currentView === 'certificate' && (
+                    <span className="absolute -bottom-1.5 h-0.5 w-1/2 rounded-full bg-action" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1014,9 +1585,27 @@ function App() {
         </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-7xl items-start gap-8 px-6 pt-28 pb-16 md:px-12 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <section className="w-full justify-self-center lg:justify-self-stretch">
-          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6">
+      {currentView === 'leaderboard' ? (
+        <div className="pt-28">
+          <LeaderboardPage
+            userPoints={points}
+            userLevels={completedLevels.length}
+            userAddress={wallet.account}
+          />
+        </div>
+      ) : currentView === 'learning' ? (
+        <div className="pt-28">
+          <LearningPage
+            points={points}
+            setPoints={setPoints}
+            completedLessons={completedLessons}
+            setCompletedLessons={setCompletedLessons}
+          />
+        </div>
+      ) : (
+        <main className="mx-auto grid w-full max-w-7xl items-start gap-8 px-6 pt-28 pb-16 md:px-12 lg:grid-cols-[minmax(0,1fr)_18rem]">
+          <section className="w-full justify-self-center lg:justify-self-stretch">
+            <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6">
             <div className="relative flex w-full flex-col items-center gap-6 rounded-3xl bg-surface p-6 shadow-card ring-1 ring-black/5 md:p-8">
             <div className="pointer-events-none absolute -inset-x-10 -top-10 -z-10 h-44 bg-gradient-to-b from-action/25 to-transparent blur-3xl" />
 
@@ -1146,6 +1735,22 @@ function App() {
 
           {/* Board Content */}
           <div className={activeTab === 'board' ? 'flex flex-col gap-4' : 'hidden'}>
+            <div className="rounded-3xl bg-white/80 shadow-soft ring-1 ring-black/5 p-4">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-content-dim">当前关卡</span>
+                  <LevelSelect
+                    value={level}
+                    onChange={startNewRound}
+                    completedLevels={completedLevels}
+                    totalLevels={totalLevels}
+                  />
+                </div>
+                <div className="h-px bg-black/5" />
+                <ProgressBar completedCount={completedLevels.length} totalCount={totalLevels} />
+              </div>
+            </div>
+
             <div className="overflow-hidden rounded-3xl bg-white/80 shadow-soft ring-1 ring-black/5">
               <div className="flex items-center justify-between px-6 py-4 text-sm font-semibold text-content-dim">
                 <span>总用时</span>
@@ -1172,13 +1777,16 @@ function App() {
                   const lvl = i + 1
                   const word = collectedWords[lvl]
                   const isUnlocked = !!word
+                  const isSpark = word === 'SPARK'
                   return (
                     <div
                       key={lvl}
                       className={`flex h-10 items-center justify-center rounded-xl text-xs font-bold ring-1 transition-all ${
                         isUnlocked
-                          ? 'bg-action/10 text-action ring-action/20'
-                          : 'bg-black/5 text-content-dim/40 ring-black/5'
+                          ? isSpark
+                            ? 'bg-gray-100 text-gray-400 ring-gray-200' // SPARK 样式：灰色
+                            : 'bg-action/10 text-action ring-action/20' // 正常样式：绿色
+                          : 'bg-black/5 text-content-dim/40 ring-black/5' // 未解锁样式
                       }`}
                     >
                       {isUnlocked ? word : '????'}
@@ -1283,7 +1891,8 @@ function App() {
             </div>
           </div>
         </aside>
-      </main>
+        </main>
+      )}
     </div>
   )
 }

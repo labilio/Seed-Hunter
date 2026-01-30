@@ -172,7 +172,7 @@ uvicorn gandalf_game.main:app --reload --host 0.0.0.0 --port 8000
   "message": "🎉 Congratulations! You've beaten Level 1!",
   "mint_signature": "{\"signature\": \"0x...\", \"message_data\": {...}, \"nonce\": \"...\", \"expires_at\": 1234567890}",
   "nft_metadata": {
-    "name": "Gandalf Breaker - Level 1",
+    "name": "Seed Hunter - Level 1",
     "tier": "Bronze"
   }
 }
@@ -289,6 +289,12 @@ uvicorn gandalf_game.main:app --reload --host 0.0.0.0 --port 8000
 
 ## 智能合约需求
 
+```
+1. **NFT 合约 (GandalfBreakerNFT)**
+2. **提示支付合约 (HintPayment)**
+
+```
+
 ### 1. NFT 合约 (GandalfBreakerNFT)
 
 **功能**: 玩家通关后铸造成就 NFT
@@ -326,7 +332,7 @@ interface IGandalfBreakerNFT {
 ```
 
 **NFT 元数据建议**:
-- `name`: "Gandalf Breaker - Level X"
+- `name`: "Seed Hunter - Level X"
 - `tier`: Bronze (L1-2) / Silver (L3-4) / Gold (L5-6) / Platinum (L7)
 - `level`: 1-7
 - `completedAt`: timestamp

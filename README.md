@@ -1,6 +1,8 @@
 # 🎮 Seed Hunter - AI 越狱挑战游戏
 
-> 一款结合 AI 安全与 Web3 的创新游戏，挑战你的 Prompt 注入技巧！
+> AI + WEB3 已经成为超大趋势，但是
+> 你的 AI 设计真的安全吗？
+> 这是一款结合 AI 安全与 Web3 的创新游戏。只有挑战过 AI 安全，你才知道 AI 安全在 Web3 行业是多重要的一个事情！
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Kite AI](https://img.shields.io/badge/Blockchain-Kite%20AI-purple.svg)
@@ -90,6 +92,11 @@ NFT_CONTRACT_ADDRESS=0x12bC0b071f294716E4E3cc64f3Da117519496B24
 | 5 | ⭐⭐⭐ | 输入黑名单 | Gold |
 | 6 | ⭐⭐⭐ | LLM 输入检测 + 数据贡献 | Gold |
 | 7 | ⭐⭐⭐⭐ | 终极防御 + 数据贡献 | Platinum |
+
+
+## 🎯 一些常见的 AI 安全破解木马：
+
+
 
 ## 🔗 区块链集成
 
