@@ -7,8 +7,8 @@ import json
 import os
 from typing import Dict, Optional, List, Any
 from openai import AsyncOpenAI
-from .config import config, LEVELS
-from .models import (
+from config import config, LEVELS
+from models import (
     NegotiateHintResponse,
     HintResponse,
     HintPaidEvent

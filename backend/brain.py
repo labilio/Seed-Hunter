@@ -7,8 +7,8 @@ import re
 import uuid
 from typing import Dict, List, Optional, Tuple
 from openai import AsyncOpenAI
-from .config import config, LEVELS, LevelConfig
-from .models import ChatResponse
+from config import config, LEVELS, LevelConfig
+from models import ChatResponse
 
 
 class SimpleLLM:

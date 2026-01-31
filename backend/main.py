@@ -11,17 +11,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 
-from .config import config, LEVELS
-from .models import (
+from config import config, LEVELS
+from models import (
     ChatRequest, ChatResponse,
     SubmitPasswordRequest, SubmitPasswordResponse,
     NegotiateHintRequest, NegotiateHintResponse,
     VerifyHintPaymentRequest, HintResponse,
-    LevelInfoResponse, GameStatusResponse
+    LevelInfoResponse, GameStatusResponse,
+    ClaimCertificateRequest, ClaimCertificateResponse
 )
-from .brain import TheBrain
-from .judge import TheJudge
-from .oracle import TheOracle
+from brain import TheBrain
+from judge import TheJudge
+from oracle import TheOracle
 
 
 # ============== 全局服务实例 ==============
@@ -303,6 +304,75 @@ async def get_unlocked_hint(
         raise HTTPException(status_code=503, detail="Oracle service not initialized")
     
     return oracle.get_hint_if_unlocked(level, hint_index, wallet_address)
+
+
+# ============== Certificate - 荣誉勋章 ==============
+
+@app.post("/api/certificate/claim", response_model=ClaimCertificateResponse, tags=["Certificate"])
+async def claim_certificate(request: ClaimCertificateRequest):
+    """
+    领取荣誉勋章
+    
+    完成所有 7 个关卡后，可以领取荣誉勋章 NFT。
+    
+    - **wallet_address**: 用户钱包地址
+    - **completed_levels**: 已完成的关卡列表
+    
+    ## 成功响应
+    如果有资格，返回:
+    - `eligible`: true
+    - `mint_signature`: 用于链上铸造勋章 NFT 的签名数据
+    - `certificate_metadata`: 勋章元数据
+    """
+    if judge is None:
+        raise HTTPException(status_code=503, detail="Judge service not initialized")
+    
+    # 检查是否完成所有关卡
+    required_levels = set(range(1, 8))  # {1, 2, 3, 4, 5, 6, 7}
+    completed_set = set(request.completed_levels)
+    
+    if not required_levels.issubset(completed_set):
+        missing_levels = required_levels - completed_set
+        return ClaimCertificateResponse(
+            success=True,
+            eligible=False,
+            message=f"❗ 您还未完成所有关卡。缺少关卡: {sorted(missing_levels)}"
+        )
+    
+    # 生成勋章签名
+    import json
+    signature_data = judge.generate_certificate_signature(
+        wallet_address=request.wallet_address,
+        completed_levels=request.completed_levels
+    )
+    
+    if not signature_data:
+        return ClaimCertificateResponse(
+            success=True,
+            eligible=True,
+            message="✅ 您已有资格领取勋章，但签名服务未配置。请联系管理员。"
+        )
+    
+    # 勋章元数据
+    certificate_metadata = {
+        "name": "Seed Hunter - 安全守护者荣誉勋章",
+        "description": "成功完成 Seed Hunter 所有 7 个关卡的最高荣誉。证明了持有者对 AI 安全和 Prompt Injection 的深刻理解。",
+        "tier": "Legendary",
+        "image": "🏆",
+        "attributes": [
+            {"trait_type": "Certificate Type", "value": "Honor Badge"},
+            {"trait_type": "Completed Levels", "value": 7},
+            {"trait_type": "Rarity", "value": "Legendary"}
+        ]
+    }
+    
+    return ClaimCertificateResponse(
+        success=True,
+        eligible=True,
+        message="🎉 恭喜！您已完成所有关卡，可以铸造您的荣誉勋章 NFT！",
+        mint_signature=json.dumps(signature_data),
+        certificate_metadata=certificate_metadata
+    )
 
 
 # ============== 静态文件服务 (前端) ==============

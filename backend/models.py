@@ -112,3 +112,20 @@ class HintPaidEvent(BaseModel):
     amount: int  # wei
     tx_hash: str
     block_number: int
+
+
+# ============== Certificate Models (荣誉勋章) ==============
+
+class ClaimCertificateRequest(BaseModel):
+    """领取荣誉勋章请求"""
+    wallet_address: str = Field(..., description="用户钱包地址")
+    completed_levels: List[int] = Field(..., description="已完成的关卡列表")
+
+
+class ClaimCertificateResponse(BaseModel):
+    """领取荣誉勋章响应"""
+    success: bool
+    eligible: bool = Field(..., description="是否有资格领取勋章")
+    message: str
+    mint_signature: Optional[str] = Field(None, description="NFT 铸造签名")
+    certificate_metadata: Optional[Dict[str, Any]] = Field(None, description="勋章元数据")

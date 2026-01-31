@@ -3,7 +3,7 @@ import confetti from 'canvas-confetti'
 import { ethers } from 'ethers'
 import ReactMarkdown from 'react-markdown'
 
-import { sendMessageToAI, submitPassword } from './utils/chatService.js'
+import { sendMessageToAI, submitPassword, claimCertificate } from './utils/chatService.js'
 
 import aiDefaultPng from './assets/AI DEFAULT.png'
 import aiHintPng from './assets/AI HINT.png'
@@ -827,7 +827,7 @@ function LeaderboardPage({ userPoints, userLevels, userAddress }) {
   )
 }
 
-function CertificatePage({ wallet, completedLevels, totalLevels }) {
+function CertificatePage({ wallet, completedLevels, totalLevels, showNotification }) {
   const isAllCompleted = completedLevels.length >= totalLevels
   const isWalletConnected = !!wallet?.account
 
@@ -881,9 +881,103 @@ function CertificatePage({ wallet, completedLevels, totalLevels }) {
 
         <button
           disabled={!isWalletConnected}
-          onClick={() => {
-            if (!isAllCompleted && isWalletConnected) {
+          onClick={async () => {
+            if (!isWalletConnected) {
+              showNotification('请先连接钱包', 'info')
+              return
+            }
+            if (!isAllCompleted) {
               showNotification('请先完成所有 7 个关卡才能领取勋章！', 'info')
+              return
+            }
+            try {
+              showNotification('正在获取铸造签名...', 'info')
+              const result = await claimCertificate({
+                walletAddress: wallet.account,
+                completedLevels: completedLevels,
+              })
+              
+              if (!result.eligible) {
+                showNotification(result.message, 'warning')
+                return
+              }
+              
+              if (!result.mint_signature) {
+                showNotification('签名服务未配置，请联系管理员', 'error')
+                return
+              }
+
+              // 解析签名数据
+              const signatureData = typeof result.mint_signature === 'string' 
+                ? JSON.parse(result.mint_signature) 
+                : result.mint_signature
+
+              showNotification('请在 MetaMask 中确认交易...', 'info')
+
+              // 检查网络是否为 Kite AI Testnet
+              const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+              if (chainId !== '0x940') {
+                try {
+                  await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0x940' }],
+                  })
+                } catch (switchError) {
+                  if (switchError.code === 4902) {
+                    await window.ethereum.request({
+                      method: 'wallet_addEthereumChain',
+                      params: [{
+                        chainId: '0x940',
+                        chainName: 'KiteAI Testnet',
+                        rpcUrls: ['https://rpc-testnet.gokite.ai'],
+                        nativeCurrency: { name: 'KITE', symbol: 'KITE', decimals: 18 },
+                        blockExplorerUrls: ['https://testnet.kitescan.ai'],
+                      }],
+                    })
+                  } else {
+                    throw switchError
+                  }
+                }
+              }
+
+              // NFT 合约地址
+              const nftContract = signatureData.contract_address || '0x12bC0b071f294716E4E3cc64f3Da117519496B24'
+              
+              // 构建 mintWithSignature 调用数据
+              const iface = new ethers.Interface([
+                'function mintWithSignature(uint256 level, bytes signature, bytes32 nonce, uint256 deadline)'
+              ])
+              const sig = signatureData.signature.startsWith('0x') ? signatureData.signature : '0x' + signatureData.signature
+              const nonce = signatureData.nonce.startsWith('0x') ? signatureData.nonce : '0x' + signatureData.nonce
+              
+              const data = iface.encodeFunctionData('mintWithSignature', [
+                signatureData.level,
+                sig,
+                nonce,
+                signatureData.deadline,
+              ])
+
+              // 发送交易
+              const txHash = await window.ethereum.request({
+                method: 'eth_sendTransaction',
+                params: [{
+                  from: wallet.account,
+                  to: nftContract,
+                  data: data,
+                }],
+              })
+
+              showNotification('🎉 铸造交易已提交！交易哈希: ' + txHash.slice(0, 10) + '...', 'success')
+              confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } })
+              console.log('Certificate minted! TxHash:', txHash)
+              console.log('Certificate metadata:', result.certificate_metadata)
+            } catch (error) {
+              console.error('Claim certificate error:', error)
+              if (error.code === 4001) {
+                showNotification('用户取消了交易', 'info')
+              } else {
+                showNotification('铸造失败: ' + (error.message || '未知错误'), 'error')
+              }
             }
           }}
           className={`flex-1 rounded-2xl py-4 px-6 font-bold text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${
@@ -1821,6 +1915,7 @@ function App() {
             wallet={wallet}
             completedLevels={completedLevels}
             totalLevels={totalLevels}
+            showNotification={showNotification}
           />
         </div>
       ) : (

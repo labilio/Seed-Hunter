@@ -10,9 +10,9 @@ from typing import Optional, Dict, Any
 from eth_account import Account
 from eth_account.messages import encode_defunct
 from web3 import Web3
-from .config import config, LEVELS
-from .models import SubmitPasswordResponse
-from .kite_contributor import KiteContributor, JailbreakContribution
+from config import config, LEVELS
+from models import SubmitPasswordResponse
+from kite_contributor import KiteContributor, JailbreakContribution
 
 
 class TheJudge:
@@ -236,3 +236,88 @@ class TheJudge:
         print(f"  - nft_metadata: {response.nft_metadata}")
         
         return response
+
+    def generate_certificate_signature(
+        self,
+        wallet_address: str,
+        completed_levels: list
+    ) -> Optional[Dict[str, Any]]:
+        """
+        生成荣誉勋章铸造签名
+        
+        需要完成所有 7 个关卡才能领取
+        
+        参数:
+        - wallet_address: 用户钱包地址
+        - completed_levels: 已完成关卡列表
+        
+        返回:
+        - signature: 签名 (hex)
+        - nonce: bytes32 nonce
+        - deadline: 过期时间戳
+        - contract_address: NFT 合约地址
+        - signer: 签名者地址
+        - certificate_type: 勋章类型
+        """
+        account = self._get_signer_account()
+        if not account:
+            print(f"❌ No signer account configured - SIGNER_PRIVATE_KEY is missing")
+            return None
+        
+        print(f"🏆 Generating certificate signature for wallet {wallet_address[:10]}...")
+        print(f"   Completed levels: {completed_levels}")
+        
+        # 生成 nonce (bytes32)
+        timestamp = int(time.time())
+        nonce_raw = hashlib.sha256(
+            f"{wallet_address}:certificate:{timestamp}:{os.urandom(8).hex()}".encode()
+        ).digest()
+        nonce_hex = "0x" + nonce_raw.hex()
+        
+        # 防止重放
+        if nonce_hex in self._used_nonces:
+            print(f"⚠️  Nonce already used: {nonce_hex}")
+            return None
+        self._used_nonces.add(nonce_hex)
+        
+        # 过期时间 (1小时后)
+        deadline = timestamp + 3600
+        
+        # NFT 合约地址
+        contract_address = config.NFT_CONTRACT_ADDRESS or "0x0000000000000000000000000000000000000000"
+        
+        # 勋章等级 (特殊等级 8 表示荣誉勋章)
+        certificate_level = 8
+        
+        # 构建与智能合约兼容的消息哈希
+        message_hash = Web3.solidity_keccak(
+            ['address', 'uint256', 'bytes32', 'uint256', 'address'],
+            [
+                Web3.to_checksum_address(wallet_address),
+                certificate_level,
+                nonce_raw,
+                deadline,
+                Web3.to_checksum_address(contract_address)
+            ]
+        )
+        
+        # 使用 eth_account 签名 (EIP-191 personal_sign)
+        signable_message = encode_defunct(message_hash)
+        signed = account.sign_message(signable_message)
+        
+        result = {
+            "signature": signed.signature.hex(),
+            "nonce": nonce_hex,
+            "deadline": deadline,
+            "contract_address": contract_address,
+            "signer": account.address,
+            "level": certificate_level,
+            "wallet": wallet_address,
+            "certificate_type": "honor_badge"
+        }
+        
+        print(f"✅ Certificate signature generated successfully")
+        print(f"  Signature: {result['signature'][:20]}...")
+        print(f"  Nonce: {result['nonce']}")
+        
+        return result

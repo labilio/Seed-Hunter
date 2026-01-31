@@ -129,3 +129,33 @@ export async function clearSession(level) {
 export async function sendChat({ message, level, secretWord }) {
   return sendMessageToAI({ userMessage: message, level, secretWord })
 }
+
+/**
+ * 领取荣誉勋章
+ * @param {Object} params
+ * @param {string} params.walletAddress - 用户钱包地址
+ * @param {Array<number>} params.completedLevels - 已完成的关卡列表
+ */
+export async function claimCertificate({ walletAddress, completedLevels }) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/certificate/claim`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        wallet_address: walletAddress,
+        completed_levels: completedLevels,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Claim certificate error:', error)
+    throw error
+  }
+}
