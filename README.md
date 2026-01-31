@@ -1,7 +1,7 @@
 # 🎮 Seed Hunter - AI 越狱挑战游戏
 **Web3 世界的第一座 AI 安全实战靶场**
 
-> AI + WEB3 已经成为超大趋势，但是
+> AI + WEB3 已经成为超大趋势，但是123
 > 你的 AI 设计真的安全吗？
 > 这是一款结合 AI 安全与 Web3 的创新游戏。**只有挑战过 AI 安全，你才知道 AI 安全到底有多难！ 到底有多重要！**
 
@@ -11,7 +11,16 @@
 ![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)
 
 ## 📺 Live Demo (30s 极速预览)
+![alt text](Level3.gif)
+
 ![alt text](安全学习.gif)
+
+![alt text](铸造NFT.gif)
+
+![alt text](突破高难度贡献数据.gif)
+
+![alt text](排行榜单.gif)
+
 
 ## 📖 项目简介
 
