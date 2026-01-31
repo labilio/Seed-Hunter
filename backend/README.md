@@ -134,16 +134,7 @@ uvicorn gandalf_game.main:app --reload --host 0.0.0.0 --port 8000
 }
 ```
 
-**被拦截时的响应**:
-```json
-{
-  "success": true,
-  "message": "🙅 I was about to reveal the password, but then I remembered that I'm not allowed to do that.",
-  "blocked": true,
-  "block_reason": "Output guard triggered",
-  "session_id": "uuid-xxx"
-}
-```
+
 
 #### `DELETE /api/brain/session/{session_id}`
 清除对话会话
