@@ -600,7 +600,7 @@ function LeaderboardPage({ userPoints, userLevels, userAddress }) {
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-12">
       <div className="mb-8 text-center">
-        <h2 className="text-3xl font-black text-content">🏆 猎手排行榜</h2>
+        <h2 className="text-3xl font-black text-content">🏆 排行榜单</h2>
         <p className="mt-2 text-content-dim">看看谁是全网最强的助记词猎手</p>
       </div>
 
@@ -671,7 +671,7 @@ function LeaderboardPage({ userPoints, userLevels, userAddress }) {
 
 function CertificatePage({ wallet, completedLevels, totalLevels }) {
   const isAllCompleted = completedLevels.length >= totalLevels
-  const isWalletConnected = !!wallet?.address
+  const isWalletConnected = !!wallet?.account
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-12 flex flex-col items-center animate-in fade-in zoom-in duration-500">
@@ -722,19 +722,21 @@ function CertificatePage({ wallet, completedLevels, totalLevels }) {
         </button>
 
         <button
-          disabled={!isAllCompleted || !isWalletConnected}
+          disabled={!isWalletConnected}
+          onClick={() => {
+            if (!isAllCompleted && isWalletConnected) {
+              alert('请先完成所有 7 个关卡才能领取勋章！')
+            }
+          }}
           className={`flex-1 rounded-2xl py-4 px-6 font-bold text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${
             isAllCompleted && isWalletConnected
               ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:shadow-orange-500/30 hover:-translate-y-1 hover:scale-105'
-              : 'bg-black/5 text-content-dim cursor-not-allowed'
+              : isWalletConnected
+                ? 'bg-surface text-content hover:bg-surface-highlight hover:-translate-y-1'
+                : 'bg-black/5 text-content-dim cursor-not-allowed'
           }`}
         >
-          <span>领取勋章</span>
-          {!isAllCompleted && (
-            <span className="text-xs bg-black/10 px-2 py-0.5 rounded-full">
-              {completedLevels.length}/{totalLevels}
-            </span>
-          )}
+          <span>领取链上勋章</span>
         </button>
       </div>
     </div>
@@ -1544,7 +1546,7 @@ function App() {
                     currentView === 'certificate' ? 'text-content hover:text-action' : 'text-content-dim hover:text-action'
                   }`}
                 >
-                  🎖️ 领取证书
+                  🎖️ 领取勋章
                   {currentView === 'certificate' && (
                     <span className="absolute -bottom-1.5 h-0.5 w-1/2 rounded-full bg-action" />
                   )}
@@ -1600,6 +1602,14 @@ function App() {
             setPoints={setPoints}
             completedLessons={completedLessons}
             setCompletedLessons={setCompletedLessons}
+          />
+        </div>
+      ) : currentView === 'certificate' ? (
+        <div className="pt-28">
+          <CertificatePage
+            wallet={wallet}
+            completedLevels={completedLevels}
+            totalLevels={totalLevels}
           />
         </div>
       ) : (
