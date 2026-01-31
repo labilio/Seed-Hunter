@@ -1,6 +1,6 @@
-# 🧙 Gandalf Game - Web3 AI Password Challenge
+# 🧙 Seed Hunter Game - Web3 AI Password Challenge
 
-一个结合 Gandalf 风格 Prompt Injection 挑战与 Web3 机制的 Demo 游戏。
+一个结合 Seed Hunter 风格 Prompt Injection 挑战与 Web3 机制的 Demo 游戏。
 
 ## 📋 目录
 
@@ -63,7 +63,7 @@ CHAIN_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
 
 ```bash
 # 方式一：使用启动脚本
-python -m gandalf_game.run
+python -m seedhunter_game.run
 
 # 方式二：直接 uvicorn
 uvicorn gandalf_game.main:app --reload --host 0.0.0.0 --port 8000
@@ -295,14 +295,14 @@ uvicorn gandalf_game.main:app --reload --host 0.0.0.0 --port 8000
 
 ```
 
-### 1. NFT 合约 (GandalfBreakerNFT)
+### 1. NFT 合约 (SeedHunterNFT)
 
 **功能**: 玩家通关后铸造成就 NFT
 
 **需要的接口**:
 
 ```solidity
-interface IGandalfBreakerNFT {
+interface ISeedHunterNFT {
     /// @notice 使用后端签名铸造 NFT
     /// @param to 接收者地址
     /// @param level 通关的关卡 (1-7)
@@ -447,7 +447,7 @@ interface IHintPayment {
 ## 文件结构
 
 ```
-gandalf_game/
+seedhunter_game/
 ├── __init__.py          # 模块入口
 ├── config.py            # 配置和关卡数据
 ├── models.py            # Pydantic 数据模型

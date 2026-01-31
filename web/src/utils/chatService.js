@@ -1,5 +1,5 @@
 /**
- * Chat Service - 调用后端 gandalf_game API
+ * Chat Service - 调用后端 seedhunter_game API
  * 不再直连 LLM，而是通过后端统一处理
  */
 

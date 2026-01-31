@@ -140,7 +140,7 @@ class KiteContributor:
                 "signature": contribution.signature,
             },
             "metadata": {
-                "source": "gandalf_game",
+                "source": "seedhunter_game",
                 "version": "1.0",
                 "contribution_id": contribution.contribution_id,
             }

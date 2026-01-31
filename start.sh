@@ -118,7 +118,7 @@ stop_all() {
 show_status() {
     echo -e "${BLUE}📊 服务状态:${NC}"
     
-    if pgrep -f "uvicorn gandalf_game" > /dev/null; then
+    if pgrep -f "uvicorn seedhunter_game" > /dev/null; then
         echo -e "  后端: ${GREEN}运行中${NC} (http://localhost:8000)"
     else
         echo -e "  后端: ${RED}未运行${NC}"

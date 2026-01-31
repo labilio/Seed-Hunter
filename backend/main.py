@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Gandalf Game API",
     description="""
-    🧙 **Gandalf Game** - A Web3 AI Password Challenge
+    🧙 **Seed Hunter** - A Web3 AI Password Challenge
     
     Combine Gandalf-style prompt injection challenges with Web3 mechanics:
     - Chat with AI guardians protecting secrets
@@ -80,7 +80,7 @@ app.add_middleware(
 @app.get("/health", tags=["System"])
 async def health_check():
     """健康检查"""
-    return {"status": "ok", "service": "gandalf-game"}
+    return {"status": "ok", "service": "seedhunter_game"}
 
 
 # ============== Game Status ==============

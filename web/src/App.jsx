@@ -259,7 +259,14 @@ function useMetaMask() {
     }
   }
 
-  return { hasProvider, status, account, chainId, error, connect }
+  const disconnect = () => {
+    setAccount(null)
+    setStatus('disconnected')
+    setChainId(null)
+    setError(null)
+  }
+
+  return { hasProvider, status, account, chainId, error, connect, disconnect }
 }
 
 function StatusDot({ status }) {
@@ -555,6 +562,127 @@ function RechargeModal({ currentPoints, neededPoints, onClose, onRecharge }) {
         >
           取消
         </button>
+      </div>
+    </div>
+  )
+}
+
+function TxSuccessModal({ visible, txHash, onClose }) {
+  const [copied, setCopied] = useState(false)
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(txHash)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  if (!visible) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-black/5">
+        <div className="mb-4 flex justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+            <svg viewBox="0 0 24 24" fill="none" className="h-8 w-8 text-green-600" stroke="currentColor" strokeWidth="3">
+              <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+
+        <h3 className="mb-2 text-center text-lg font-bold text-content">NFT 铸造交易已提交！</h3>
+
+        <div className="mb-4 rounded-xl bg-surface-highlight p-3">
+          <p className="mb-2 text-xs font-medium text-content-dim">交易哈希</p>
+          <div className="flex items-center gap-2">
+            <p className="flex-1 truncate text-sm font-mono text-content">{txHash}</p>
+            <button
+              onClick={copyToClipboard}
+              className="shrink-0 rounded-lg bg-white p-1.5 text-content-dim transition-colors hover:bg-black/5 hover:text-content"
+              title={copied ? '已复制' : '复制'}
+            >
+              {copied ? (
+                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-green-600" stroke="currentColor" strokeWidth="3">
+                  <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="2">
+                  <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <a
+          href={`https://testnet.kitescan.ai/tx/${txHash}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-action py-2.5 text-sm font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5 hover:bg-action-hover"
+        >
+          <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="2">
+            <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          在区块浏览器查看
+        </a>
+
+        <button
+          onClick={onClose}
+          className="w-full rounded-xl bg-surface-highlight py-2.5 text-sm font-bold text-content-dim transition-colors hover:bg-black/5"
+        >
+          关闭
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function WalletConnectModal({ visible, onClose, onConnect }) {
+  if (!visible) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-black/5">
+        <div className="mb-4 flex justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+            <svg viewBox="0 0 24 24" fill="none" className="h-8 w-8 text-blue-600" stroke="currentColor" strokeWidth="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 12v8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+
+        <h3 className="mb-4 text-xl font-bold text-content text-center">请使用Kite AI网络进行体验</h3>
+
+        <div className="mb-6 rounded-xl bg-surface-highlight p-4">
+          <h4 className="mb-3 text-lg font-bold text-content">连接方法：</h4>
+          <ol className="list-decimal list-inside space-y-3 text-sm font-medium text-content-dim">
+            <li>打开MetaMask钱包，选择网络，选择自定义网络</li>
+            <li>
+              输入以下内容：
+              <div className="mt-2 space-y-2 font-mono text-xs">
+                <div>网络名称: KiteAI Testnet</div>
+                <div>RPC URL: <code className="bg-black/5 px-1 py-0.5 rounded">https://rpc-testnet.gokite.ai</code></div>
+                <div>Chain ID: 2368</div>
+                <div>浏览器: <code className="bg-black/5 px-1 py-0.5 rounded">https://testnet.kitescan.ai</code></div>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            onClick={onConnect}
+            className="w-full rounded-xl bg-green-500 py-3 text-base font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5 hover:bg-green-600"
+          >
+            连接
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full rounded-xl bg-surface-highlight py-3 text-base font-bold text-content-dim transition-colors hover:bg-black/5"
+          >
+            取消
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -1081,7 +1209,7 @@ function App() {
   const [level, setLevel] = useState(1)
   const [completedLevels, setCompletedLevels] = useState(() => {
     try {
-      const raw = window.localStorage.getItem('gandalf:completedLevels')
+      const raw = window.localStorage.getItem('seedhunter:completedLevels')
       const parsed = raw ? JSON.parse(raw) : []
       if (!Array.isArray(parsed)) return []
       const filtered = parsed
@@ -1106,7 +1234,9 @@ function App() {
   const [viewHintModal, setViewHintModal] = useState({ visible: false, title: '', content: '' })
   const [nftModal, setNftModal] = useState({ visible: false, nftData: null })
   const [isMinting, setIsMinting] = useState(false)
+  const [txSuccessModal, setTxSuccessModal] = useState({ visible: false, txHash: '' })
   const [rechargeModal, setRechargeModal] = useState({ visible: false, neededPoints: 0 })
+  const [walletConnectModal, setWalletConnectModal] = useState({ visible: false })
   const [activeTab, setActiveTab] = useState('board') // 'board' | 'hints'
   const [currentView, setCurrentView] = useState('game') // 'game' | 'leaderboard' | 'learning' | 'certificate'
 
@@ -1155,7 +1285,7 @@ function App() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem('gandalf:completedLevels', JSON.stringify(completedLevels))
+      window.localStorage.setItem('seedhunter:completedLevels', JSON.stringify(completedLevels))
     } catch {
       return
     }
@@ -1193,11 +1323,11 @@ function App() {
       setImageOverrides((prev) => ({ ...prev, ...next }))
     }
 
-    applyOverrides(window.__GANDALF_IMAGES__)
+    applyOverrides(window.__SEEDHUNTER_IMAGES__)
     const onImages = (e) => applyOverrides(e?.detail)
     window.addEventListener('gandalf:images', onImages)
     const onHint = () => setImageMode('hint')
-    window.addEventListener('gandalf:hint', onHint)
+    window.addEventListener('seedhunter:hint', onHint)
     return () => {
       window.removeEventListener('gandalf:images', onImages)
       window.removeEventListener('gandalf:hint', onHint)
@@ -1401,8 +1531,8 @@ function App() {
               }],
             })
 
-            alert(`🎉 NFT 铸造交易已提交！\n\n交易哈希: ${txHash}\n\n请在区块浏览器查看: https://testnet.kitescan.ai/tx/${txHash}`)
             setNftModal({ visible: false, nftData: null })
+            setTxSuccessModal({ visible: true, txHash })
           } catch (error) {
             console.error('Mint error:', error)
             alert('铸造失败: ' + (error.message || error.reason || '未知错误'))
@@ -1426,6 +1556,28 @@ function App() {
           }}
         />
       )}
+
+      {/* 交易成功弹窗 */}
+      <TxSuccessModal
+        visible={txSuccessModal.visible}
+        txHash={txSuccessModal.txHash}
+        onClose={() => setTxSuccessModal({ visible: false, txHash: '' })}
+      />
+
+      {/* 钱包连接提示弹窗 */}
+      <WalletConnectModal
+        visible={walletConnectModal.visible}
+        onClose={() => setWalletConnectModal({ visible: false })}
+        onConnect={async () => {
+          try {
+            setWalletConnectModal({ visible: false })
+            await wallet.connect()
+          } catch (error) {
+            console.error('Wallet connect error:', error)
+            alert('连接失败: ' + (error.message || '未知错误'))
+          }
+        }}
+      />
 
       {/* 锦囊购买弹窗 */}
       {hintModal.visible && (
@@ -1570,16 +1722,16 @@ function App() {
                         : 'No MetaMask'}
                 </div>
                 {wallet.status === 'connected' && wallet.chainId && (
-                  <Badge tone="neutral" className="hidden sm:inline-flex">{formatChain(wallet.chainId)}</Badge>
+                  <Badge tone="neutral">{formatChain(wallet.chainId)}</Badge>
                 )}
               </div>
               {wallet.status !== 'connected' && wallet.status !== 'connecting' && wallet.hasProvider && (
                 <button
                   type="button"
-                  onClick={wallet.connect}
-                  className="rounded-full bg-action/10 px-3 py-1 text-xs font-bold text-action transition-colors hover:bg-action/15 hover:text-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                  onClick={() => setWalletConnectModal({ visible: true })}
+                  className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-bold text-green-600 transition-colors hover:bg-green-500/15 hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400/40"
                 >
-                  Connect
+                  连接
                 </button>
               )}
             </Pill>

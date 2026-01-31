@@ -2,10 +2,10 @@
 pragma solidity ^0.8.24;
 
 /**
- * @title IGandalfBreakerNFT
- * @notice Interface for GandalfBreakerNFT contract
+ * @title ISeedHunterNFT
+ * @notice Interface for SeedHunterNFT contract
  */
-interface IGandalfBreakerNFT {
+interface ISeedHunterNFT {
     /// @notice Mint NFT with backend signature
     function mintWithSignature(
         uint256 level,
@@ -20,10 +20,10 @@ interface IGandalfBreakerNFT {
     /// @notice Get all completed levels for a user
     function getCompletedLevels(address user) external view returns (bool[] memory);
     
-    /// @notice Get the signer address
+    /// @notice Get signer address
     function signer() external view returns (address);
     
-    /// @notice Update the signer (owner only)
+    /// @notice Update signer (owner only)
     function setSigner(address newSigner) external;
     
     /// @notice Get tier name for a level

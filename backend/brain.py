@@ -76,7 +76,7 @@ class ConversationMemory:
 
 
 class SecurityGuard:
-    """安全防护系统 - 模拟 Gandalf 的多层防御"""
+    """安全防护系统 - 模拟 Seed Hunter 的多层防御"""
     
     def __init__(self):
         self.guard_llm = SimpleLLM()

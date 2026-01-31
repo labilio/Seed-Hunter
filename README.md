@@ -48,7 +48,7 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
 # 编辑 .env 填写 API 密钥
-uvicorn gandalf_game.main:app --reload --port 8000
+uvicorn seedhunter_game.main:app --reload --port 8000
 ```
 
 **前端:**
@@ -121,7 +121,7 @@ spooooon/
 ├── start.sh                 # 一键启动脚本
 ├── README.md                # 项目说明
 ├── spoon-starter/           # 后端项目
-│   ├── gandalf_game/
+│   ├── seedhunter_game/
 │   │   ├── main.py          # FastAPI 入口
 │   │   ├── brain.py         # AI 对话处理
 │   │   ├── judge.py         # 密码验证 + NFT 签名

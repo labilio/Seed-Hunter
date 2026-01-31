@@ -1,5 +1,5 @@
 """
-Gandalf Game Models - API 请求/响应数据模型
+# Seed Hunter Game Models - API 请求/响应数据模型
 """
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field

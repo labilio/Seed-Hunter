@@ -72,7 +72,7 @@ class TheJudge:
         wallet_address: str,
     ) -> Optional[Dict[str, Any]]:
         """
-        生成 NFT 铸造签名 (与智能合约 GandalfBreakerNFT 兼容)
+        生成 NFT 铸造签名 (与智能合约 SeedHunterNFT 兼容)
         
         智能合约验证格式:
         keccak256(abi.encodePacked(userAddress, level, nonce, deadline, contractAddress))
@@ -86,7 +86,10 @@ class TheJudge:
         """
         account = self._get_signer_account()
         if not account:
+            print(f"❌ No signer account configured - SIGNER_PRIVATE_KEY is missing")
             return None
+        
+        print(f"🔐 Generating mint signature for level {level}, wallet {wallet_address[:10]}...")
         
         # 生成 nonce (bytes32)
         timestamp = int(time.time())
@@ -97,6 +100,7 @@ class TheJudge:
         
         # 防止重放 (内存中)
         if nonce_hex in self._used_nonces:
+            print(f"⚠️  Nonce already used: {nonce_hex}")
             return None
         self._used_nonces.add(nonce_hex)
         
@@ -105,6 +109,9 @@ class TheJudge:
         
         # NFT 合约地址
         contract_address = config.NFT_CONTRACT_ADDRESS or "0x0000000000000000000000000000000000000000"
+        
+        print(f"  Contract: {contract_address}")
+        print(f"  Signer: {account.address}")
         
         # 构建与智能合约兼容的消息哈希
         # Solidity: keccak256(abi.encodePacked(userAddress, level, nonce, deadline, contractAddress))
@@ -123,7 +130,7 @@ class TheJudge:
         signable_message = encode_defunct(message_hash)
         signed = account.sign_message(signable_message)
         
-        return {
+        result = {
             "signature": signed.signature.hex(),
             "nonce": nonce_hex,
             "deadline": deadline,
@@ -132,6 +139,13 @@ class TheJudge:
             "level": level,
             "wallet": wallet_address
         }
+        
+        print(f"✅ Signature generated successfully")
+        print(f"  Signature: {result['signature'][:20]}...")
+        print(f"  Nonce: {result['nonce']}")
+        print(f"  Deadline: {result['deadline']}")
+        
+        return result
     
     async def submit_password(
         self,
@@ -147,8 +161,14 @@ class TheJudge:
         2. 验证密码
         3. 如果正确，生成 NFT 铸造签名
         """
+        print(f"\n📝 Submit password request received:")
+        print(f"  Level: {level}")
+        print(f"  Wallet: {wallet_address[:10]}...")
+        print(f"  Password: {password[:3]}...")
+        
         # 验证关卡
         if level not in LEVELS:
+            print(f"❌ Invalid level: {level}")
             return SubmitPasswordResponse(
                 success=False,
                 correct=False,
@@ -159,17 +179,21 @@ class TheJudge:
         is_correct = self.verify_password(level, password)
         
         if not is_correct:
+            print(f"❌ Incorrect password")
             return SubmitPasswordResponse(
                 success=True,
                 correct=False,
                 message="❌ Incorrect password. Try again!"
             )
         
+        print(f"✅ Password correct!")
+        
         # 密码正确，生成签名
         level_config = LEVELS[level]
         signature_data = self.generate_mint_signature(level, wallet_address)
         
         if not signature_data:
+            print(f"⚠️  Signature generation failed")
             return SubmitPasswordResponse(
                 success=True,
                 correct=True,
@@ -198,7 +222,7 @@ class TheJudge:
                     "estimated_reward": kite_result.get("estimated_reward", {}),
                 }
         
-        return SubmitPasswordResponse(
+        response = SubmitPasswordResponse(
             success=True,
             correct=True,
             message=f"🎉 Congratulations! You've beaten Level {level}! Use the signature to mint your NFT.",
@@ -206,3 +230,9 @@ class TheJudge:
             nft_metadata=level_config.nft_metadata,
             kite_contribution=kite_contribution
         )
+        
+        print(f"📤 Response prepared:")
+        print(f"  - mint_signature: {'✓ Included' if response.mint_signature else '✗ Missing'}")
+        print(f"  - nft_metadata: {response.nft_metadata}")
+        
+        return response

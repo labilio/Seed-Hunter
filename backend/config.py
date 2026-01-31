@@ -1,5 +1,5 @@
 """
-Gandalf Game Configuration - 游戏配置和关卡数据
+# Seed Hunter Game Configuration - 游戏配置和关卡数据
 """
 import os
 from typing import Dict, List, Optional
@@ -28,7 +28,7 @@ class LevelConfig(BaseModel):
     hint_base_price: float = 0.01  # 基础提示价格（USDC）
     nft_metadata: Dict = {}
 
-# 7个关卡配置，模拟 Gandalf 的递进式难度
+# 7个关卡配置，模拟 Seed Hunter 的递进式难度
 LEVELS: Dict[int, LevelConfig] = {
     1: LevelConfig(
         level=1,
@@ -303,3 +303,10 @@ class AppConfig:
 
 
 config = AppConfig()
+
+# 打印配置信息用于调试
+print(f"🔧 Configuration loaded:")
+print(f"  - SIGNER_PRIVATE_KEY: {'✓ Set' if config.SIGNER_PRIVATE_KEY else '✗ Missing'}")
+print(f"  - NFT_CONTRACT_ADDRESS: {config.NFT_CONTRACT_ADDRESS or '✗ Missing'}")
+print(f"  - CHAIN_RPC_URL: {config.CHAIN_RPC_URL}")
+print(f"  - CHAIN_ID: {os.getenv('CHAIN_ID', 'Not set')}")

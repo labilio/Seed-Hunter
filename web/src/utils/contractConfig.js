@@ -31,7 +31,7 @@ export const KITE_AI_NETWORK = {
   blockExplorerUrls: ['https://testnet.kitescan.ai'],
 }
 
-// GandalfBreakerNFT ABI (简化版，只包含需要的函数)
+// SeedHunterNFT ABI (简化版，只包含需要的函数)
 export const NFT_ABI = [
   {
     name: 'mintWithSignature',

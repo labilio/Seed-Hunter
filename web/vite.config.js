@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // 将 /api 请求代理到后端 gandalf_game 服务
+      // 将 /api 请求代理到后端 seedhunter_game 服务
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,

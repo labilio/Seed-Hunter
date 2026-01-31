@@ -10,11 +10,11 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 
 /**
- * @title GandalfBreakerNFT
- * @notice NFT contract for Gandalf Game achievements
+ * @title SeedHunterNFT
+ * @notice NFT contract for Seed Hunter achievements
  * @dev Players mint NFTs by submitting signatures from the backend after solving levels
  */
-contract GandalfBreakerNFT is ERC721Enumerable, Ownable {
+contract SeedHunterNFT is ERC721Enumerable, Ownable {
     using ECDSA for bytes32;
     using Strings for uint256;
 
@@ -157,7 +157,7 @@ contract GandalfBreakerNFT is ERC721Enumerable, Ownable {
         
         string memory json = string(abi.encodePacked(
             '{"name":"Seed Hunter - Level ', level.toString(), '",',
-            '"description":"Achievement NFT for breaking Gandalf defenses at Level ', level.toString(), '",',
+            '"description":"Achievement NFT for breaking Seed Hunter defenses at Level ', level.toString(), '",',
             '"attributes":[',
             '{"trait_type":"Level","value":', level.toString(), '},',
             '{"trait_type":"Tier","value":"', tier, '"},',
