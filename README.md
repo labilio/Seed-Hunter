@@ -5,22 +5,34 @@
 > 你的 AI 设计真的安全吗？
 > 这是一款结合 AI 安全与 Web3 的创新游戏。**只有挑战过 AI 安全，你才知道 AI 安全到底有多难！ 到底有多重要！**
 
+
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Kite AI](https://img.shields.io/badge/Blockchain-Kite%20AI-purple.svg)
 ![React](https://img.shields.io/badge/Frontend-React-61dafb.svg)
 ![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)
 
 ## 📺 Live Demo (30s 极速预览)
+### 向 AI 发起挑战，尝试破解 AI 的安全防御
 ![alt text](Level3.gif)
 
+### 学习Web3行业历史上真实发生的 AI 安全事件，学以致用
 ![alt text](安全学习.gif)
 
+### 
 ![alt text](铸造NFT.gif)
 
 ![alt text](突破高难度贡献数据.gif)
 
 ![alt text](排行榜单.gif)
 
+
+## 💡 灵感与痛点 (Inspiration)
+
+在 Web3 + AI 的浪潮下，我们面临着前所未有的安全挑战：
+1.  **Prompt Injection (提示词注入):** 简单的社会工程学攻击就能让 AI 泄露私钥。
+2.  **Blind Signing (盲签):** 用户习惯性点击确认，导致资产被盗。
+
+**Seed Hunter** 是一个**反直觉的游戏化教学平台**。我们不教你怎么防，我们让你体验**怎么攻**。通过扮演黑客攻破 AI 防线，用户将直观地理解 LLM 的脆弱性与 Web3 安全的重要性。
 
 ## 📖 项目简介
 
@@ -32,6 +44,8 @@
 
 - 成功攻破关卡后，玩家可以获得 「链上荣誉勋章」 NFT 奖励；攻破高难度关卡后，还可以将攻击数据贡献给 Kite AI 网络，获得「链上代币奖励」
 
+
+
 ### 核心玩法
 
 1. **7 个难度递增的关卡** - 从简单的无防御到复杂的多层 AI + 黑名单防御
@@ -39,31 +53,8 @@
 3. **Kite AI 数据贡献** - Level 6-7 的攻击数据可以贡献给 AI 安全研究，帮助共建更加安全的Web3 + AI 世界
 4. **安全学习** - 不知道怎么写提示词会绕过 AI ？ 随时查看
 5. **以史为鉴** - 在挑战的过程中，了解历史上真实的 **九大惊天大劫案**,深入了解 AI 安全在 Web3 行业中的惨痛教训
-6. **排行天梯** - 与链上好友一同挑战
+6. **排行天梯** - 与链上好友一同挑战！
 
-
-### 访问地址
-
-- 🎮 **游戏前端**: http://localhost:5173
-- 📡 **后端 API**: http://localhost:8000
-- 📚 **API 文档**: http://localhost:8000/docs
-
-## ⚙️ 配置说明
-
-### 环境变量 (.env)
-
-```bash
-# LLM API 配置 (必填)
-DEEPSEEK_API_KEY=your_api_key_here
-
-# 区块链配置 (NFT 铸造需要)
-SIGNER_PRIVATE_KEY=your_private_key
-CHAIN_RPC_URL=https://rpc-testnet.gokite.ai
-CHAIN_ID=2368
-
-# NFT 合约地址
-NFT_CONTRACT_ADDRESS=0x12bC0b071f294716E4E3cc64f3Da117519496B24
-```
 
 ##  关卡系统
 
@@ -77,10 +68,27 @@ NFT_CONTRACT_ADDRESS=0x12bC0b071f294716E4E3cc64f3Da117519496B24
 | 6 | ⭐⭐⭐ | LLM 输入检测 + 数据贡献 | Gold |
 | 7 | ⭐⭐⭐⭐ | 终极防御 + 数据贡献 | Platinum |
 
+## ✨ 核心特性
 
-##  一些常见的 AI 安全破解木马：
+### 1. 基于 SpoonOS 的智能攻防 Agent
+利用 **SpoonOS Framework**，我们构建了一个具备"人格分裂"特性的 AI 守卫。
+- **动态弱点注入:** 每一关的 AI 都有特定的心理弱点（如续写强迫症、角色扮演沉浸）。
+- **实时判定:** Agent 自动分析用户输入，判定是否构成有效攻击。
+
+### 2. Kite AI 驱动的链上成就体系
+这不是一个单纯的网页游戏，所有成就均上链。
+- **SBT 证书:** 通关后自动触发 **Kite AI** 智能合约，铸造灵魂绑定代币 (SBT)。
+- **GameFi 经济:** 消耗链上积分购买“黑客锦囊” (Cheat Sheet)，实现 Play-to-Learn-to-Earn 闭环。
+
+### 3. 跨模态攻击演练 (Cross-Modal)
+从基础的语言诱导，到高级的 **Python 代码注入**。
+- 我们展示了 LLM 在面对**代码生成任务**时，如何因为"工具理性"而忽略安全审查。
 
 
+## 👥Team：双人成行
+**[Secret]**: 产品 & UI & 前端 | 微信：Secret24_ | X @ SecretMaple24
+
+**[口水怪]**: 前端 & 后端 & 智能合约 | 微信：Virtual_Soda
 
 ##  区块链集成
 
